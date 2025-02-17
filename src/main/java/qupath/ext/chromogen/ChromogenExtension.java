@@ -1,14 +1,15 @@
-package qupath.ext.template;
+package qupath.ext.chromogen;
 
 import javafx.beans.property.BooleanProperty;
 import javafx.beans.property.IntegerProperty;
 import javafx.beans.property.Property;
 import javafx.scene.Scene;
+import javafx.scene.control.Dialog;
 import javafx.scene.control.MenuItem;
 import javafx.stage.Stage;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import qupath.ext.template.ui.InterfaceController;
+import qupath.ext.chromogen.ui.InterfaceController;
 import qupath.fx.dialogs.Dialogs;
 import qupath.fx.prefs.controlsfx.PropertyItemBuilder;
 import qupath.lib.common.Version;
@@ -16,6 +17,7 @@ import qupath.lib.gui.QuPathGUI;
 import qupath.lib.gui.extensions.GitHubProject;
 import qupath.lib.gui.extensions.QuPathExtension;
 import qupath.lib.gui.prefs.PathPrefs;
+import qupath.lib.images.ImageData;
 
 import java.io.IOException;
 import java.util.ResourceBundle;
@@ -33,43 +35,38 @@ import java.util.ResourceBundle;
  *     /resources/META-INF/services/qupath.lib.gui.extensions.QuPathExtension
  * </pre>
  */
-public class DemoExtension implements QuPathExtension, GitHubProject {
-	// TODO: add and modify strings to this resource bundle as needed
+public class ChromogenExtension implements QuPathExtension, GitHubProject {
 	/**
 	 * A resource bundle containing all the text used by the extension. This may be useful for translation to other languages.
 	 * Note that this is optional and you can define the text within the code and FXML files that you use.
 	 */
-	private static final ResourceBundle resources = ResourceBundle.getBundle("qupath.ext.template.ui.strings");
-	private static final Logger logger = LoggerFactory.getLogger(DemoExtension.class);
+	private static final ResourceBundle resources = ResourceBundle.getBundle("qupath.ext.chromogen.ui.strings");
+	private static final Logger logger = LoggerFactory.getLogger(ChromogenExtension.class);
 
 	/**
 	 * Display name for your extension
-	 * TODO: define this
 	 */
 	private static final String EXTENSION_NAME = resources.getString("name");
 
 	/**
 	 * Short description, used under 'Extensions > Installed extensions'
-	 * TODO: define this
 	 */
 	private static final String EXTENSION_DESCRIPTION = resources.getString("description");
 
 	/**
 	 * QuPath version that the extension is designed to work with.
 	 * This allows QuPath to inform the user if it seems to be incompatible.
-	 * TODO: define this
 	 */
-	private static final Version EXTENSION_QUPATH_VERSION = Version.parse("v0.5.0");
+	private static final Version EXTENSION_QUPATH_VERSION = Version.parse("v0.5.1");
 
 	/**
 	 * GitHub repo that your extension can be found at.
 	 * This makes it easier for users to find updates to your extension.
 	 * If you don't want to support this feature, you can remove
 	 * references to GitHubRepo and GitHubProject from your extension.
-	 * TODO: define this
 	 */
 	private static final GitHubRepo EXTENSION_REPOSITORY = GitHubRepo.create(
-			EXTENSION_NAME, "myGitHubUserName", "myGitHubRepo");
+			EXTENSION_NAME, "tweber225", "qupath-extension-chromogen");
 
 	/**
 	 * Flag whether the extension is already installed (might not be needed... but we'll do it anyway)
@@ -90,7 +87,7 @@ public class DemoExtension implements QuPathExtension, GitHubProject {
 	 * because of the type of GUI element we use to manage it.
 	 */
 	private static final Property<Integer> integerOption = PathPrefs.createPersistentPreference(
-			"demo.num.option", 1).asObject();
+			"chromogen.num.option", 1).asObject();
 
 	/**
 	 * An example of how to expose persistent preferences to other classes in your extension.
@@ -99,6 +96,11 @@ public class DemoExtension implements QuPathExtension, GitHubProject {
 	public static Property<Integer> integerOptionProperty() {
 		return integerOption;
 	}
+
+	/**
+	 * Hold the QuPathGUI reference in a static field
+	 */
+	private static QuPathGUI qupathGUI;
 
 	/**
 	 * Create a stage for the extension to display
@@ -111,6 +113,10 @@ public class DemoExtension implements QuPathExtension, GitHubProject {
 			logger.debug("{} is already installed", getName());
 			return;
 		}
+		if (qupathGUI == null) {
+			qupathGUI = qupath;
+		}
+		
 		isInstalled = true;
 		addPreferenceToPane(qupath);
 		addMenuItem(qupath);
@@ -125,8 +131,8 @@ public class DemoExtension implements QuPathExtension, GitHubProject {
 	private void addPreferenceToPane(QuPathGUI qupath) {
         var propertyItem = new PropertyItemBuilder<>(enableExtensionProperty, Boolean.class)
 				.name(resources.getString("menu.enable"))
-				.category("Demo extension")
-				.description("Enable the demo extension")
+				.category("Chromogen extension")
+				.description("Enable the Chromogen extension")
 				.build();
 		qupath.getPreferencePane()
 				.getPropertySheet()
@@ -141,7 +147,7 @@ public class DemoExtension implements QuPathExtension, GitHubProject {
 	 */
 	private void addMenuItem(QuPathGUI qupath) {
 		var menu = qupath.getMenu("Extensions>" + EXTENSION_NAME, true);
-		MenuItem menuItem = new MenuItem("My menu item");
+		MenuItem menuItem = new MenuItem("Chromogen");
 		menuItem.setOnAction(e -> createStage());
 		menuItem.disableProperty().bind(enableExtensionProperty.not());
 		menu.getItems().add(menuItem);
@@ -165,6 +171,23 @@ public class DemoExtension implements QuPathExtension, GitHubProject {
 			}
 		}
 		stage.show();
+	}
+
+	public static void add100toBlueChannel(){
+		Dialogs.showInfoNotification("TEST", "TEST123");
+
+		if (qupathGUI == null) {
+            Dialogs.showErrorMessage("Error", "QuPath GUI is not initialized!");
+            logger.error("QuPathGUI is null. Cannot modify the image.");
+            return;
+        }
+		ImageData<?> imageData = qupathGUI.getImageData();
+        if (imageData == null) {
+            Dialogs.showErrorMessage("Error", "No image is currently open.");
+            logger.error("No image is open in QuPath.");
+            return;
+        }
+
 	}
 
 
