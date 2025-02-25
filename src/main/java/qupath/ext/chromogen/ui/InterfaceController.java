@@ -58,7 +58,7 @@ public class InterfaceController extends VBox {
 
     @FXML
     private void runDemoExtension() {
-        ChromogenExtension.add100toBlueChannel();
+        ChromogenExtension.applyChromogenTransform();
 
         Dialogs.showInfoNotification(
                 resources.getString("run.title"),

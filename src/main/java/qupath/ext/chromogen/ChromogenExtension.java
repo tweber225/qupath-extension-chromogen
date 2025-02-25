@@ -18,7 +18,9 @@ import qupath.lib.gui.extensions.GitHubProject;
 import qupath.lib.gui.extensions.QuPathExtension;
 import qupath.lib.gui.prefs.PathPrefs;
 import qupath.lib.images.ImageData;
+import qupath.lib.images.servers.ImageServer;
 
+import java.awt.image.BufferedImage;
 import java.io.IOException;
 import java.util.ResourceBundle;
 
@@ -173,21 +175,44 @@ public class ChromogenExtension implements QuPathExtension, GitHubProject {
 		stage.show();
 	}
 
-	public static void add100toBlueChannel(){
-		Dialogs.showInfoNotification("TEST", "TEST123");
-
+	 /**
+     * Example method that transforms the current image using your ChromogenImageServer.
+     */
+    public static void applyChromogenTransform() {
+		logger.info("Applying Transform");
 		if (qupathGUI == null) {
-            Dialogs.showErrorMessage("Error", "QuPath GUI is not initialized!");
-            logger.error("QuPathGUI is null. Cannot modify the image.");
-            return;
-        }
+			Dialogs.showErrorMessage("Error", "QuPath GUI is not initialized!");
+			return;
+		}
 		ImageData<?> imageData = qupathGUI.getImageData();
-        if (imageData == null) {
-            Dialogs.showErrorMessage("Error", "No image is currently open.");
-            logger.error("No image is open in QuPath.");
-            return;
-        }
-
+		if (imageData == null) {
+			Dialogs.showErrorMessage("Error", "No image is currently open.");
+			return;
+		}
+	
+		var server = imageData.getServer();
+		if (!(server instanceof ImageServer)) {
+			Dialogs.showErrorMessage("Error", "Current server is not a BufferedImage-type server.");
+			return;
+		}
+	
+		try {
+			// Wrap the existing server in your ChromogenImageServer
+			var chromServer = new ChromogenImageServer((ImageServer<BufferedImage>) server);
+	
+			// Build a new ImageData using the same hierarchy
+			var transformedData = new ImageData<>(chromServer, imageData.getHierarchy());
+	
+			// Replace the displayed image
+			qupathGUI.getViewer().setImageData(transformedData);
+	
+			Dialogs.showInfoNotification("Chromogen", "Applied sublinear transform to the image!");
+		} catch (IOException e) {
+			// If anything triggers an IOException (e.g. reading a tile)
+			// handle it gracefully here
+			logger.error("Failed to apply Chromogen transform!", e);
+			Dialogs.showErrorMessage("Chromogen", "Failed to apply transform:\n" + e.getMessage());
+		}
 	}
 
 
